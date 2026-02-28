@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../utils/api.js';
 import { connectSocket, disconnectSocket } from '../utils/socket.js';
@@ -10,7 +11,10 @@ export const AuthProvider = ({ children }) => {
 
   const initUser = useCallback(async () => {
     const token = localStorage.getItem('accessToken');
-    if (!token) { setLoading(false); return; }
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     try {
       const res = await api.get('/auth/me');
       setUser(res.data.user);
@@ -22,7 +26,9 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  useEffect(() => { initUser(); }, [initUser]);
+  useEffect(() => {
+    initUser();
+  }, [initUser]);
 
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password });
@@ -45,17 +51,37 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    try { await api.post('/auth/logout'); } catch {}
+    try {
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
     localStorage.clear();
     setUser(null);
     disconnectSocket();
   };
 
-  return (
-    <AuthContext.Provider value={{ user, setUser, login, register, logout, loading }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+  };
+
+  const value = {
+    user,
+    setUser,
+    updateUser,
+    login,
+    register,
+    logout,
+    loading,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

@@ -1,0 +1,213 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  width: 480px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  animation: scaleIn 0.2s ease;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modalHeader h2 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--text-1);
+}
+
+.closeBtn {
+  font-size: 20px;
+  color: var(--text-3);
+  padding: 4px;
+  border-radius: var(--r-xs);
+  transition: all var(--t);
+}
+
+.closeBtn:hover {
+  color: var(--text-1);
+  background: var(--bg-3);
+}
+
+form {
+  padding: 24px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+
+.input,
+.searchInput {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-md);
+  font-size: 14px;
+  color: var(--text-1);
+  transition: border-color var(--t), box-shadow var(--t);
+}
+
+.input:focus,
+.searchInput:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.userList {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  margin-top: 8px;
+}
+
+.userItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background var(--t);
+  border-bottom: 1px solid var(--border);
+}
+
+.userItem:last-child {
+  border-bottom: none;
+}
+
+.userItem:hover {
+  background: var(--bg);
+}
+
+.userItem.selected {
+  background: var(--accent-light);
+}
+
+.userName {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text-1);
+}
+
+.checkmark {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.noUsers {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 14px;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.checkboxLabel input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.cancelBtn,
+.createBtn {
+  padding: 10px 20px;
+  border-radius: var(--r-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--t);
+}
+
+.cancelBtn {
+  background: transparent;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background: var(--bg-3);
+}
+
+.createBtn {
+  background: var(--accent);
+  color: white;
+  border: none;
+}
+
+.createBtn:hover:not(:disabled) {
+  background: var(--accent-2);
+}
+
+.createBtn:disabled,
+.cancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

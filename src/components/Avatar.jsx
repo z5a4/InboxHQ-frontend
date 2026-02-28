@@ -1,3 +1,4 @@
+// src/components/Avatar.jsx
 import styles from './Avatar.module.css';
 
 const COLORS = [
@@ -10,15 +11,16 @@ const getColor = (name) => {
   return COLORS[name.charCodeAt(0) % COLORS.length];
 };
 
-export default function Avatar({ user, size = 38, showOnline = true }) {
+export default function Avatar({ user, size = 38, showOnline = true, showRestricted = false }) {
   const initials = user?.username?.slice(0, 2).toUpperCase() || '??';
   const color    = getColor(user?.username);
+  const displayName = user?.displayName || user?.username || 'User';
 
   return (
     <div
       className={styles.avatar}
       style={{ width: size, height: size, background: color, fontSize: size * 0.36 }}
-      title={user?.username}
+      title={displayName}
     >
       {initials}
       {showOnline && user?.isOnline && (
@@ -29,6 +31,9 @@ export default function Avatar({ user, size = 38, showOnline = true }) {
             height: Math.max(8, size * 0.26),
           }}
         />
+      )}
+      {showRestricted && (
+        <span className={styles.restrictedBadge}>🔒</span>
       )}
     </div>
   );

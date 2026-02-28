@@ -4,18 +4,46 @@ import { useSocket } from '../hooks/useSocket.js';
 import api from '../utils/api.js';
 import Sidebar from '../components/Sidebar.jsx';
 import ChatWindow from '../components/ChatWindow.jsx';
+import CreateGroupModal from '../components/CreateGroupModal.jsx';
 import styles from './ChatPage.module.css';
 
 export default function ChatPage() {
-  const { user }                          = useAuth();
+  const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
-  const [activeConv, setActiveConv]       = useState(null);
-  const [loading, setLoading]             = useState(true);
+  const [activeConv, setActiveConv] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [groupInvites, setGroupInvites] = useState([]);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  // New state for users and userMap
+  const [users, setUsers] = useState([]);
+  const [userMap, setUserMap] = useState({});
+
+  // Fetch users once on mount
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const res = await api.get('/users');
+      const usersData = res.data.users || [];
+      setUsers(usersData);
+      const map = {};
+      usersData.forEach(u => map[u._id] = u);
+      setUserMap(map);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
 
   const fetchConversations = useCallback(async () => {
     try {
       const res = await api.get('/chat/conversations');
-      setConversations(res.data.conversations);
+      setConversations(res.data.conversations || []);
+      const invites = (res.data.conversations || []).filter(
+        (c) => c.type === 'group' && c.isPending === true
+      );
+      setGroupInvites(invites);
     } catch (err) {
       console.error('Fetch conversations error:', err);
     } finally {
@@ -23,58 +51,97 @@ export default function ChatPage() {
     }
   }, []);
 
-  useEffect(() => { fetchConversations(); }, [fetchConversations]);
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
 
-  // Socket events for real-time updates
   useSocket({
     'user:online': ({ userId }) => {
-      setConversations((prev) =>
-        prev.map((c) => ({
-          ...c,
-          participants: c.participants.map((p) =>
-            p._id === userId ? { ...p, isOnline: true } : p
-          ),
-        }))
-      );
-      // Also update active conversation so header status updates live
-      setActiveConv((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          participants: prev.participants.map((p) =>
-            p._id === userId ? { ...p, isOnline: true } : p
-          ),
-        };
-      });
+      updateUserOnlineStatus(userId, true);
     },
     'user:offline': ({ userId, lastSeen }) => {
-      setConversations((prev) =>
-        prev.map((c) => ({
-          ...c,
-          participants: c.participants.map((p) =>
-            p._id === userId ? { ...p, isOnline: false, lastSeen } : p
-          ),
-        }))
-      );
-      // Update active conversation participant status too
-      setActiveConv((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          participants: prev.participants.map((p) =>
-            p._id === userId ? { ...p, isOnline: false, lastSeen } : p
-          ),
-        };
-      });
+      updateUserOnlineStatus(userId, false, lastSeen);
     },
     'conversation:updated': (conv) => {
       setConversations((prev) => {
         const exists = prev.find((c) => c._id === conv._id);
-        if (exists) return [conv, ...prev.filter((c) => c._id !== conv._id)];
+        if (exists) {
+          return [conv, ...prev.filter((c) => c._id !== conv._id)];
+        }
         return [conv, ...prev];
       });
+      if (conv.type === 'group' && conv.isPending) {
+        setGroupInvites((prev) => {
+          if (!prev.find((c) => c._id === conv._id)) {
+            return [...prev, conv];
+          }
+          return prev;
+        });
+      } else {
+        setGroupInvites((prev) => prev.filter((c) => c._id !== conv._id));
+      }
+    },
+    'message:new': (msg) => {
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c._id === msg.conversationId) {
+            const isActive = activeConv?._id === c._id;
+            return {
+              ...c,
+              lastMessage: msg,
+              unreadCount: isActive ? c.unreadCount : (c.unreadCount || 0) + 1,
+            };
+          }
+          return c;
+        })
+      );
+    },
+    'group:invite': () => fetchConversations(),
+    'group:invite:response': () => fetchConversations(),
+    'chat:request:accepted': ({ conversationId, conversation }) => {
+      setConversations(prev => {
+        const exists = prev.find(c => c._id === conversationId);
+        if (exists) {
+          return prev.map(c =>
+            c._id === conversationId ? { ...conversation, isPending: false } : c
+          );
+        } else {
+          return [conversation, ...prev];
+        }
+      });
+      setActiveConv(prev =>
+        prev?._id === conversationId ? { ...conversation, isPending: false } : prev
+      );
     },
   });
+
+  const updateUserOnlineStatus = (userId, isOnline, lastSeen = null) => {
+    setConversations((prev) =>
+      prev.map((c) => ({
+        ...c,
+        participants: c.participants?.map((p) =>
+          p._id === userId ? { ...p, isOnline, lastSeen: lastSeen || p.lastSeen } : p
+        ),
+        otherParticipant:
+          c.otherParticipant?._id === userId
+            ? { ...c.otherParticipant, isOnline, lastSeen: lastSeen || c.otherParticipant.lastSeen }
+            : c.otherParticipant,
+      }))
+    );
+    setActiveConv((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        participants: prev.participants?.map((p) =>
+          p._id === userId ? { ...p, isOnline, lastSeen: lastSeen || p.lastSeen } : p
+        ),
+        otherParticipant:
+          prev.otherParticipant?._id === userId
+            ? { ...prev.otherParticipant, isOnline, lastSeen: lastSeen || prev.otherParticipant.lastSeen }
+            : prev.otherParticipant,
+      };
+    });
+  };
 
   const openConversation = async (userId) => {
     try {
@@ -93,6 +160,34 @@ export default function ChatPage() {
 
   const handleSelectConv = (conv) => {
     setActiveConv(conv);
+    if (conv._id && conv.unreadCount > 0) {
+      api.put(`/chat/conversations/${conv._id}/read`).catch(() => {});
+      setConversations((prev) =>
+        prev.map((c) => (c._id === conv._id ? { ...c, unreadCount: 0 } : c))
+      );
+    }
+  };
+
+  const handleConvUpdate = (updatedConv) => {
+    setActiveConv(updatedConv);
+    setConversations((prev) =>
+      prev.map((c) => (c._id === updatedConv._id ? updatedConv : c))
+    );
+  };
+
+  const handleRefresh = () => {
+    fetchConversations();
+    fetchUsers(); // refresh user list as well
+  };
+
+  // eslint-disable-next-line no-unused-vars
+  const handleRespondToGroupInvite = (conversationId, _status) => {
+    setGroupInvites((prev) => prev.filter((inv) => inv._id !== conversationId));
+    fetchConversations();
+  };
+
+  const handleCreateGroup = () => {
+    setShowCreateGroup(true);
   };
 
   return (
@@ -104,34 +199,32 @@ export default function ChatPage() {
         onOpenConversation={openConversation}
         currentUser={user}
         loading={loading}
+        onRefresh={handleRefresh}
+        groupInvites={groupInvites}
+        onRespondToGroupInvite={handleRespondToGroupInvite}
+        userMap={userMap}            // <-- pass userMap
       />
       <main className={styles.main}>
-        {activeConv ? (
-          <ChatWindow
-            key={activeConv._id}
-            conversation={activeConv}
-            currentUser={user}
-            onConvUpdate={(conv) => {
-              setActiveConv(conv);
-              setConversations((prev) =>
-                prev.map((c) => (c._id === conv._id ? conv : c))
-              );
-            }}
-          />
-        ) : (
-          <EmptyState />
-        )}
+        <ChatWindow
+          key={activeConv?._id}
+          conversation={activeConv}
+          currentUser={user}
+          onConvUpdate={handleConvUpdate}
+          userMap={userMap}            // <-- pass userMap
+        />
       </main>
+      {showCreateGroup && (
+        <CreateGroupModal
+          onClose={() => setShowCreateGroup(false)}
+          onGroupCreated={(newConv) => {
+            setConversations((prev) => [newConv, ...prev]);
+            setActiveConv(newConv);
+          }}
+        />
+      )}
+      <button className={styles.createGroupFab} onClick={handleCreateGroup} title="Create Group">
+        +
+      </button>
     </div>
   );
 }
-
-const EmptyState = () => (
-  <div className={styles.empty}>
-    <div className={styles.emptyIcon}>✦</div>
-    <h2 className={styles.emptyTitle}>InboxHQ</h2>
-    <p className={styles.emptyText}>
-      Select a conversation from the sidebar<br />or find a colleague to message.
-    </p>
-  </div>
-);

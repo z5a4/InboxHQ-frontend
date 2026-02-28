@@ -1,0 +1,88 @@
+/* src/components/ChatRequest.module.css */
+.request {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 16px;
+  margin-bottom: 12px;
+  animation: fadeUp 0.2s ease;
+  box-shadow: var(--shadow-xs);
+}
+
+.requestHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.requestInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.requestName {
+  font-weight: 600;
+  color: var(--text-1);
+  font-size: 15px;
+}
+
+.requestTime {
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.requestMessage {
+  font-size: 13px;
+  color: var(--text-2);
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border-radius: var(--r-sm);
+  font-style: italic;
+  border-left: 3px solid var(--amber);
+}
+
+.requestActions {
+  display: flex;
+  gap: 8px;
+}
+
+.actionBtn {
+  flex: 1;
+  padding: 10px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all var(--t);
+  cursor: pointer;
+}
+
+.acceptBtn {
+  background: var(--green-bg);
+  color: var(--green);
+  border: 1px solid var(--green);
+}
+
+.acceptBtn:hover:not(:disabled) {
+  background: var(--green);
+  color: white;
+}
+
+.declineBtn {
+  background: var(--red-bg);
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+
+.declineBtn:hover:not(:disabled) {
+  background: var(--red);
+  color: white;
+}
+
+.actionBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

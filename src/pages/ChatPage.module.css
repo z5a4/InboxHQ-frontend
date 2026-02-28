@@ -44,3 +44,27 @@
   text-align: center;
   line-height: 1.7;
 }
+
+.createGroupFab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  transition: all var(--t);
+  z-index: 100;
+}
+
+.createGroupFab:hover {
+  background: var(--accent-2);
+  transform: scale(1.05);
+}
