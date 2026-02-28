@@ -1,0 +1,118 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Colors */
+  --bg:           #f5f4f0;
+  --bg-2:         #efeee9;
+  --bg-3:         #e8e6df;
+  --surface:      #ffffff;
+  --border:       #e2dfd6;
+  --border-2:     #d4d0c5;
+
+  /* Text */
+  --text-1:       #1c1b18;
+  --text-2:       #5a5750;
+  --text-3:       #9b9890;
+
+  /* Accent — warm teal */
+  --accent:       #1a7f6e;
+  --accent-2:     #156a5b;
+  --accent-light: #e6f4f1;
+  --accent-mid:   #b3ddd7;
+
+  /* States */
+  --green:        #2a9d6f;
+  --green-bg:     #e8f5ef;
+  --red:          #c94f3a;
+  --red-bg:       #fdf0ee;
+  --amber:        #c47c1a;
+  --amber-bg:     #fdf3e3;
+
+  /* Shadows */
+  --shadow-xs:    0 1px 2px rgba(0,0,0,0.05);
+  --shadow-sm:    0 2px 8px rgba(0,0,0,0.07);
+  --shadow-md:    0 4px 20px rgba(0,0,0,0.09);
+  --shadow-lg:    0 8px 40px rgba(0,0,0,0.12);
+
+  /* Radii */
+  --r-xs:  4px;
+  --r-sm:  8px;
+  --r-md:  12px;
+  --r-lg:  18px;
+  --r-xl:  24px;
+  --r-full: 9999px;
+
+  /* Typography */
+  --font-body:    'Nunito', system-ui, sans-serif;
+  --font-display: 'Instrument Serif', Georgia, serif;
+
+  /* Transition */
+  --t: 0.16s ease;
+}
+
+html, body, #root {
+  height: 100%;
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text-1);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input, button, textarea, select {
+  font-family: inherit;
+}
+
+button { cursor: pointer; border: none; background: none; }
+a { color: inherit; text-decoration: none; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(1.2); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30%            { transform: translateY(-5px); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-fadeUp  { animation: fadeUp  0.22s ease forwards; }
+.animate-fadeIn  { animation: fadeIn  0.18s ease forwards; }
+.animate-scaleIn { animation: scaleIn 0.2s  ease forwards; }

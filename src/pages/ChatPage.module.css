@@ -1,0 +1,46 @@
+.layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  animation: fadeIn 0.3s ease;
+}
+
+.emptyIcon {
+  font-size: 36px;
+  color: var(--accent-mid);
+  margin-bottom: 4px;
+}
+
+.emptyTitle {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--text-2);
+  letter-spacing: -0.3px;
+}
+
+.emptyText {
+  font-size: 14px;
+  color: var(--text-3);
+  text-align: center;
+  line-height: 1.7;
+}
