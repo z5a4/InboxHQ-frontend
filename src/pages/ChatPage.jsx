@@ -189,9 +189,9 @@ export default function ChatPage() {
 const refreshData = async () => {
   try {
     const [convsRes, usersRes, invitesRes] = await Promise.all([
-      api.get('/conversations'),
+      api.get('/chat/conversations'),
       api.get('/users'),
-      api.get('/groups/invites'),
+      api.get('/chat/groups/invites'),
     ]);
     setConversations(convsRes.data.conversations);
     setUsers(usersRes.data.users);
