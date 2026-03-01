@@ -188,14 +188,16 @@ export default function ChatPage() {
   // In the parent component (e.g., App.jsx or Dashboard.jsx)
 const refreshData = async () => {
   try {
-    const [convsRes, usersRes, invitesRes] = await Promise.all([
+    const [convsRes, usersRes] = await Promise.all([
       api.get('/chat/conversations'),
       api.get('/users'),
-      api.get('/chat/groups/invites'),
     ]);
-    setConversations(convsRes.data.conversations);
-    setUsers(usersRes.data.users);
-    setGroupInvites(invitesRes.data.invites);
+    const convs = convsRes.data.conversations || [];
+    setConversations(convs);
+    setUsers(usersRes.data.users || []);
+    // Extract pending group invites from conversations
+    const invites = convs.filter(c => c.type === 'group' && c.isPending === true);
+    setGroupInvites(invites);
   } catch (error) {
     console.error('Refresh failed:', error);
   }
