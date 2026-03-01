@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext.jsx';          // <-- NEW
 import api from '../utils/api.js';
 import Avatar from './Avatar.jsx';
 import { formatConversationTime } from '../utils/format.js';
@@ -16,16 +17,18 @@ export default function Sidebar({
   onRefresh,
   groupInvites,
   onRespondToGroupInvite,
-  userMap, // <-- new prop
+  onCreateGroup,
 }) {
   const [tab, setTab] = useState('chats');
-  const [users, setUsers] = useState([]); // for people tab only
+  const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [usersLoading, setUsersLoading] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '' });
   const { logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme(); 
+  const [refreshing, setRefreshing] = useState(false);                   // <-- NEW
   const navigate = useNavigate();
 
-  // Fetch users only for the people tab (separate from userMap)
   useEffect(() => {
     if (tab !== 'people') return;
     fetchUsers();
@@ -43,10 +46,15 @@ export default function Sidebar({
     }
   };
 
+  const showToastMessage = (msg) => {
+    setToast({ show: true, message: msg });
+    setTimeout(() => setToast({ show: false, message: '' }), 2000);
+  };
+
   const getOther = (conv) => {
-  if (conv.type === 'group') return null;
-  return conv.otherParticipant || null;
-};
+    if (conv.type === 'group') return null;
+    return conv.otherParticipant || null;
+  };
 
   const getGroupDisplayName = (conv) => {
     if (conv.groupName) return conv.groupName;
@@ -61,7 +69,7 @@ export default function Sidebar({
       return name.includes(search.toLowerCase());
     } else {
       const other = getOther(c);
-      if (!other) return true; // include even if we can't identify, will show fallback
+      if (!other) return true;
       const searchLower = search.toLowerCase();
       return (
         other.username?.toLowerCase().includes(searchLower) ||
@@ -90,12 +98,22 @@ export default function Sidebar({
   const handleUserClick = (userId) => {
     onOpenConversation(userId);
     setTab('chats');
+    showToastMessage('Request sent');
   };
 
-  const handleRefresh = () => {
-    if (onRefresh) onRefresh();
-    if (tab === 'people') fetchUsers(); // only refresh people list when on that tab
-  };
+  
+  const handleRefresh = async () => {
+  if (refreshing) return; // prevent double clicks
+  setRefreshing(true);
+  try {
+    await onRefresh(); // call the parent’s refresh function
+    showToastMessage('Refreshed successfully');
+  } catch (error) {
+    showToastMessage('Refresh failed');
+  } finally {
+    setRefreshing(false);
+  }
+};
 
   const handleAcceptGroupInvite = async (conversationId) => {
     try {
@@ -124,8 +142,19 @@ export default function Sidebar({
             <span className={styles.brandName}>InboxHQ</span>
           </div>
           <div className={styles.headerActions}>
+            {/* Dark mode toggle button – NEW */}
+            <button className={styles.themeBtn} onClick={toggleTheme} title="Toggle theme">
+              {isDark ? '☀️' : '🌙'}
+            </button>
             <button className={styles.refreshBtn} onClick={handleRefresh} title="Refresh">
               <RefreshIcon />
+            </button>
+            <button 
+              className={styles.createGroupBtn} 
+              onClick={onCreateGroup} 
+              title="Create Group"
+            >
+              <PlusIcon />
             </button>
             <button className={styles.logoutBtn} onClick={logout} title="Logout">
               <LogoutIcon />
@@ -389,6 +418,7 @@ export default function Sidebar({
                     </div>
                     <div className={styles.itemPreview}>
                       <span className={styles.userEmail}>{u.email}</span>
+                      {u.bio && <span className={styles.userBio}>{u.bio}</span>}
                       {u.conversationStatus === 'pending' && (
                         <span className={styles.requestSent}>
                           <span className={styles.pendingIcon}>⏳</span>
@@ -407,6 +437,13 @@ export default function Sidebar({
             </div>
           ))}
       </div>
+
+      {/* Toast notification */}
+      {toast.show && (
+        <div className={styles.toast}>
+          {toast.message}
+        </div>
+      )}
     </aside>
   );
 }
@@ -445,6 +482,13 @@ const PeopleIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
     <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+const PlusIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <line x1="12" y1="5" x2="12" y2="19" />
+    <line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 );
 

@@ -10,6 +10,14 @@
   overflow: hidden;
 }
 
+/* ===== Responsive override ===== */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 /* Header */
 .header {
   padding: 20px 16px 0;
@@ -48,6 +56,24 @@
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+/* Dark mode toggle button – NEW */
+.themeBtn {
+  color: var(--text-3);
+  padding: 8px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--t);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+.themeBtn:hover {
+  color: var(--accent);
+  background: var(--accent-light);
 }
 
 .refreshBtn,
@@ -552,7 +578,7 @@
   background: var(--text-3);
 }
 
-/* src/components/Sidebar.module.css - Add these */
+/* Unread indicators */
 .item.unread {
   background: var(--accent-light);
   position: relative;
@@ -599,6 +625,7 @@
   box-shadow: 0 2px 4px rgba(26, 127, 110, 0.2);
 }
 
+/* Group invites */
 .groupInviteSection {
   margin-bottom: 16px;
   padding: 0 8px;
@@ -694,4 +721,61 @@
   background: var(--surface);
   border-radius: 50%;
   padding: 2px;
+}
+
+.createGroupBtn {
+  color: var(--accent);
+  padding: 8px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--t);
+  cursor: pointer;
+  margin-right: 2px;
+}
+
+.createGroupBtn:hover {
+  color: var(--accent-2);
+  background: var(--accent-light);
+  transform: scale(1.05);
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: white;
+  padding: 10px 20px;
+  border-radius: var(--r-full);
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: var(--shadow-md);
+  z-index: 1000;
+  animation: slideUp 0.2s ease;
+}
+
+.userBio {
+  display: block;
+  font-size: 12px;
+  color: var(--text-3);
+  font-style: italic;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }

@@ -68,3 +68,14 @@
   background: var(--accent-2);
   transform: scale(1.05);
 }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .layout {
+    position: relative;
+  }
+  .main {
+    width: 100%;
+    border-left: none;
+  }
+}

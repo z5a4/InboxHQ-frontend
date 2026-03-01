@@ -1,0 +1,164 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  width: 400px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  animation: scaleIn 0.2s ease;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modalHeader h2 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--text-1);
+}
+
+.closeBtn {
+  font-size: 20px;
+  color: var(--text-3);
+  padding: 4px;
+  border-radius: var(--r-xs);
+  transition: all var(--t);
+}
+
+.closeBtn:hover {
+  color: var(--text-1);
+  background: var(--bg-3);
+}
+
+.modalBody {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.avatarSection {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.infoSection {
+  margin-bottom: 24px;
+}
+
+.displayName {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-1);
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.username {
+  font-size: 14px;
+  color: var(--text-3);
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.infoRow {
+  display: flex;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.label {
+  width: 80px;
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.value {
+  flex: 1;
+  color: var(--text-1);
+  word-break: break-word;
+}
+
+.online {
+  color: var(--green);
+}
+
+.offline {
+  color: var(--text-3);
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.fullProfileBtn {
+  padding: 10px 20px;
+  background: var(--accent);
+  color: white;
+  border-radius: var(--r-md);
+  font-size: 14px;
+  font-weight: 600;
+  transition: all var(--t);
+}
+
+.fullProfileBtn:hover {
+  background: var(--accent-2);
+}
+
+.closeBtnAlt {
+  padding: 10px 20px;
+  background: transparent;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  font-size: 14px;
+  font-weight: 600;
+  transition: all var(--t);
+}
+
+.closeBtnAlt:hover {
+  background: var(--bg-3);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

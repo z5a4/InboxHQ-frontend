@@ -19,10 +19,29 @@
   z-index: 10;
 }
 
+/* Back button – NEW */
+.backButton {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--text-2);
+  cursor: pointer;
+  padding: 4px 12px;
+  margin-right: 4px;
+  border-radius: var(--r-sm);
+  transition: all var(--t);
+}
+.backButton:hover {
+  background: var(--bg-3);
+}
+
+/* Adjust header left part when back button is present */
 .headerLeft {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1;
 }
 
 .headerInfo {
@@ -70,6 +89,7 @@
   border: 1px solid var(--border);
   transition: all var(--t);
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .profileBtn:hover {
@@ -653,11 +673,11 @@
 }
 
 .readReceipt.sent {
-  color: var(--text-3);
+  color: var(--text-4);
 }
 
 .readReceipt.delivered {
-  color: var(--text-2);
+  color: var(--text-5);
 }
 
 .readReceipt.read {

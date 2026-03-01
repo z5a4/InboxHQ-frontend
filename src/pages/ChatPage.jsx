@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useSocket } from '../hooks/useSocket.js';
+import { useMediaQuery } from '../hooks/useMediaQuery.js';          // <-- NEW
 import api from '../utils/api.js';
 import Sidebar from '../components/Sidebar.jsx';
 import ChatWindow from '../components/ChatWindow.jsx';
@@ -14,9 +15,12 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(true);
   const [groupInvites, setGroupInvites] = useState([]);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
-  // New state for users and userMap
   const [users, setUsers] = useState([]);
   const [userMap, setUserMap] = useState({});
+
+  // Responsive state
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const [mobileView, setMobileView] = useState('list'); // 'list' or 'chat'
 
   // Fetch users once on mount
   useEffect(() => {
@@ -85,11 +89,13 @@ export default function ChatPage() {
       setConversations((prev) =>
         prev.map((c) => {
           if (c._id === msg.conversationId) {
+            const isFromCurrentUser = msg.sender?._id === user?._id;
             const isActive = activeConv?._id === c._id;
+            const shouldIncrement = !isFromCurrentUser && !isActive;
             return {
               ...c,
               lastMessage: msg,
-              unreadCount: isActive ? c.unreadCount : (c.unreadCount || 0) + 1,
+              unreadCount: (c.unreadCount || 0) + (shouldIncrement ? 1 : 0),
             };
           }
           return c;
@@ -153,6 +159,8 @@ export default function ChatPage() {
         if (!exists) return [conv, ...prev];
         return prev;
       });
+      // On mobile, after opening a conversation, switch to chat view
+      if (isMobile) setMobileView('chat');
     } catch (err) {
       console.error('Open conversation error:', err);
     }
@@ -160,6 +168,7 @@ export default function ChatPage() {
 
   const handleSelectConv = (conv) => {
     setActiveConv(conv);
+    if (isMobile) setMobileView('chat');
     if (conv._id && conv.unreadCount > 0) {
       api.put(`/chat/conversations/${conv._id}/read`).catch(() => {});
       setConversations((prev) =>
@@ -175,12 +184,30 @@ export default function ChatPage() {
     );
   };
 
-  const handleRefresh = () => {
-    fetchConversations();
-    fetchUsers(); // refresh user list as well
-  };
+  
+  // In the parent component (e.g., App.jsx or Dashboard.jsx)
+const refreshData = async () => {
+  try {
+    const [convsRes, usersRes, invitesRes] = await Promise.all([
+      api.get('/conversations'),
+      api.get('/users'),
+      api.get('/groups/invites'),
+    ]);
+    setConversations(convsRes.data.conversations);
+    setUsers(usersRes.data.users);
+    setGroupInvites(invitesRes.data.invites);
+  } catch (error) {
+    console.error('Refresh failed:', error);
+  }
+};
 
-  // eslint-disable-next-line no-unused-vars
+// Pass refreshData down as a prop
+<Sidebar
+  conversations={conversations}
+  // ... other props
+  onRefresh={refreshData}
+/>
+
   const handleRespondToGroupInvite = (conversationId, _status) => {
     setGroupInvites((prev) => prev.filter((inv) => inv._id !== conversationId));
     fetchConversations();
@@ -190,41 +217,54 @@ export default function ChatPage() {
     setShowCreateGroup(true);
   };
 
+  const handleBackToList = () => {
+    setMobileView('list');
+  };
+
+  // Determine what to render on mobile
+  const showSidebar = !isMobile || (isMobile && mobileView === 'list');
+  const showChat = !isMobile || (isMobile && mobileView === 'chat');
+
   return (
     <div className={styles.layout}>
-      <Sidebar
-        conversations={conversations}
-        activeConv={activeConv}
-        onSelectConv={handleSelectConv}
-        onOpenConversation={openConversation}
-        currentUser={user}
-        loading={loading}
-        onRefresh={handleRefresh}
-        groupInvites={groupInvites}
-        onRespondToGroupInvite={handleRespondToGroupInvite}
-        userMap={userMap}            // <-- pass userMap
-      />
-      <main className={styles.main}>
-        <ChatWindow
-          key={activeConv?._id}
-          conversation={activeConv}
+      {showSidebar && (
+        <Sidebar
+          conversations={conversations}
+          activeConv={activeConv}
+          onSelectConv={handleSelectConv}
+          onOpenConversation={openConversation}
           currentUser={user}
-          onConvUpdate={handleConvUpdate}
-          userMap={userMap}            // <-- pass userMap
+          loading={loading}
+          onRefresh={refreshData}
+          groupInvites={groupInvites}
+          onRespondToGroupInvite={handleRespondToGroupInvite}
+          userMap={userMap}
+          onCreateGroup={handleCreateGroup}
         />
-      </main>
+      )}
+      {showChat && (
+        <main className={styles.main}>
+          <ChatWindow
+            key={activeConv?._id}
+            conversation={activeConv}
+            currentUser={user}
+            onConvUpdate={handleConvUpdate}
+            userMap={userMap}
+            onBack={handleBackToList}          // <-- NEW: back button for mobile
+            isMobile={isMobile}                 // <-- NEW: pass mobile flag
+          />
+        </main>
+      )}
       {showCreateGroup && (
         <CreateGroupModal
           onClose={() => setShowCreateGroup(false)}
           onGroupCreated={(newConv) => {
             setConversations((prev) => [newConv, ...prev]);
             setActiveConv(newConv);
+            if (isMobile) setMobileView('chat');
           }}
         />
       )}
-      <button className={styles.createGroupFab} onClick={handleCreateGroup} title="Create Group">
-        +
-      </button>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import { ThemeProvider } from './context/ThemeContext.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import ChatPage from './pages/ChatPage.jsx';
@@ -38,17 +39,22 @@ const AppRoutes = () => (
     <Route path="/login"    element={<PublicRoute><LoginPage /></PublicRoute>} />
     <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
     <Route path="/"         element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+    {/* Own profile route (no id) */}
     <Route path="/profile"  element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+    {/* Other user profile route (with id) */}
+    <Route path="/profile/:id" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
     <Route path="*"         element={<Navigate to="/" replace />} />
   </Routes>
 );
 
 export default function App() {
   return (
+    <ThemeProvider>
     <AuthProvider>
       <BrowserRouter>
         <AppRoutes />
       </BrowserRouter>
     </AuthProvider>
+    </ThemeProvider>
   );
 }

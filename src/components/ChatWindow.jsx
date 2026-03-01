@@ -3,6 +3,8 @@ import { getSocket } from '../utils/socket.js';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api.js';
 import Avatar from './Avatar.jsx';
+import GroupMembersModal from './GroupMembersModal.jsx';
+import ProfileModal from './ProfileModal.jsx';
 import {
   formatMessageTime,
   formatDateSeparator,
@@ -11,7 +13,14 @@ import {
 } from '../utils/format.js';
 import styles from './ChatWindow.module.css';
 
-export default function ChatWindow({ conversation, currentUser, onConvUpdate, userMap }) {
+export default function ChatWindow({
+  conversation,
+  currentUser,
+  onConvUpdate,
+  userMap,
+  onBack,        // <-- NEW: back button callback for mobile
+  isMobile,      // <-- NEW: flag to conditionally show back button
+}) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
@@ -21,6 +30,8 @@ export default function ChatWindow({ conversation, currentUser, onConvUpdate, us
   const [sending, setSending] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [accepting, setAccepting] = useState(false);
+  const [showGroupMembers, setShowGroupMembers] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
@@ -30,22 +41,22 @@ export default function ChatWindow({ conversation, currentUser, onConvUpdate, us
 
   const convId = conversation?._id;
   const isGroup = conversation?.type === 'group';
+  const isAdmin = isGroup && conversation?.admins?.includes(currentUser?._id);
+  const canSendMessage = !isGroup || conversation?.permissions?.sendMessage === 'all' || isAdmin;
   
-  // Derive other user from multiple sources
   const otherFromConversation = !isGroup
     ? conversation?.otherParticipant ||
       conversation?.participants?.find((p) => p._id !== currentUser?._id)
     : null;
 
   const effectiveOther = useMemo(() => {
-  if (isGroup) return null;
-  if (conversation?.otherParticipant) {
-    return conversation.otherParticipant;
-  }
-  // Fallback (rare)
-  const otherSender = messages.find(m => m.sender?._id !== currentUser?._id)?.sender;
-  return otherSender || null;
-}, [isGroup, conversation, messages, currentUser]);
+    if (isGroup) return null;
+    if (conversation?.otherParticipant) {
+      return conversation.otherParticipant;
+    }
+    const otherSender = messages.find(m => m.sender?._id !== currentUser?._id)?.sender;
+    return otherSender || null;
+  }, [isGroup, conversation, messages, currentUser]);
 
   const groupDisplayName = isGroup
     ? conversation?.groupName ||
@@ -171,7 +182,7 @@ export default function ChatWindow({ conversation, currentUser, onConvUpdate, us
 
   const handleInputChange = (e) => {
     setInput(e.target.value);
-    if (isPending || !convId) return;
+    if (isPending || !convId || !canSendMessage) return;
 
     const socket = getSocket();
     if (!socket) return;
@@ -184,7 +195,7 @@ export default function ChatWindow({ conversation, currentUser, onConvUpdate, us
 
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!input.trim() || sending || isPending || !convId) return;
+    if (!input.trim() || sending || isPending || !convId || !canSendMessage) return;
 
     const content = input.trim();
     setInput('');
@@ -207,7 +218,8 @@ export default function ChatWindow({ conversation, currentUser, onConvUpdate, us
     }
   };
 
-  const handleAcceptRequest = async () => {
+  const handleAcceptRequest = async (e) => {
+    if (e) e.preventDefault();
     if (!convId) return;
     setAccepting(true);
     try {
@@ -224,7 +236,8 @@ export default function ChatWindow({ conversation, currentUser, onConvUpdate, us
     }
   };
 
-  const handleDeclineRequest = async () => {
+  const handleDeclineRequest = async (e) => {
+    if (e) e.preventDefault();
     if (!convId) return;
     setAccepting(true);
     try {
@@ -237,14 +250,20 @@ export default function ChatWindow({ conversation, currentUser, onConvUpdate, us
     }
   };
 
-  const handleViewProfile = () => {
+  const handleViewProfile = (e) => {
+    e.preventDefault();
     if (effectiveOther?._id) {
       navigate(`/profile/${effectiveOther._id}`);
     }
   };
 
-  const handleViewGroupMembers = () => {
-    alert('Group members modal - implement as needed');
+  const handleOpenProfileModal = () => {
+    setShowProfileModal(true);
+  };
+
+  const handleViewGroupMembers = (e) => {
+    if (e) e.preventDefault();
+    setShowGroupMembers(true);
   };
 
   const getMessageStatus = (msg) => {
@@ -274,6 +293,11 @@ export default function ChatWindow({ conversation, currentUser, onConvUpdate, us
     return (
       <div className={styles.window}>
         <header className={styles.header}>
+          {isMobile && (
+            <button className={styles.backButton} onClick={onBack} aria-label="Back">
+              ←
+            </button>
+          )}
           <div className={styles.headerLeft}>
             <Avatar user={effectiveOther} size={44} />
             <div className={styles.headerInfo}>
@@ -288,9 +312,6 @@ export default function ChatWindow({ conversation, currentUser, onConvUpdate, us
               </span>
             </div>
           </div>
-          <button className={styles.profileBtn} onClick={handleViewProfile}>
-            View Profile
-          </button>
         </header>
 
         <div className={styles.pendingContainer}>
@@ -307,6 +328,7 @@ export default function ChatWindow({ conversation, currentUser, onConvUpdate, us
             {!requestedByMe && (
               <div className={styles.pendingActions}>
                 <button
+                  type="button"
                   className={`${styles.actionButton} ${styles.acceptButton}`}
                   onClick={handleAcceptRequest}
                   disabled={accepting}
@@ -321,6 +343,7 @@ export default function ChatWindow({ conversation, currentUser, onConvUpdate, us
                   )}
                 </button>
                 <button
+                  type="button"
                   className={`${styles.actionButton} ${styles.declineButton}`}
                   onClick={handleDeclineRequest}
                   disabled={accepting}
@@ -344,7 +367,16 @@ export default function ChatWindow({ conversation, currentUser, onConvUpdate, us
   return (
     <div className={styles.window}>
       <header className={styles.header}>
-        <div className={styles.headerLeft}>
+        {isMobile && (
+          <button className={styles.backButton} onClick={onBack} aria-label="Back">
+            ←
+          </button>
+        )}
+        <div
+          className={styles.headerLeft}
+          onClick={handleOpenProfileModal}
+          style={{ cursor: 'pointer' }}
+        >
           <Avatar
             user={isGroup ? { username: groupDisplayName } : effectiveOther}
             size={44}
@@ -370,12 +402,20 @@ export default function ChatWindow({ conversation, currentUser, onConvUpdate, us
           </div>
         </div>
         {isGroup ? (
-          <button className={styles.profileBtn} onClick={handleViewGroupMembers}>
+          <button
+            type="button"
+            className={styles.profileBtn}
+            onClick={handleViewGroupMembers}
+          >
             <GroupIcon />
             <span>Members</span>
           </button>
         ) : (
-          <button className={styles.profileBtn} onClick={handleViewProfile}>
+          <button
+            type="button"
+            className={styles.profileBtn}
+            onClick={handleViewProfile}
+          >
             <UserIcon />
             <span>Profile</span>
           </button>
@@ -386,6 +426,7 @@ export default function ChatWindow({ conversation, currentUser, onConvUpdate, us
         {hasMore && (
           <div className={styles.loadMore}>
             <button
+              type="button"
               className={styles.loadMoreButton}
               onClick={() => {
                 setLoadingMore(true);
@@ -509,7 +550,9 @@ export default function ChatWindow({ conversation, currentUser, onConvUpdate, us
             className={styles.messageInput}
             placeholder={
               isGroup
-                ? `Message ${groupDisplayName}...`
+                ? !canSendMessage
+                  ? "Only admins can send messages"
+                  : `Message ${groupDisplayName}...`
                 : `Message ${effectiveOther?.displayName || effectiveOther?.username}...`
             }
             value={input}
@@ -517,17 +560,36 @@ export default function ChatWindow({ conversation, currentUser, onConvUpdate, us
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage(e)}
             maxLength={2000}
             autoComplete="off"
-            disabled={isPending}
+            disabled={isPending || !canSendMessage}
           />
           <button
             type="submit"
             className={styles.sendButton}
-            disabled={!input.trim() || sending || isPending}
+            disabled={!input.trim() || sending || isPending || !canSendMessage}
           >
             {sending ? <span className={styles.sendSpinner} /> : <SendIcon />}
           </button>
         </form>
       </div>
+
+      {showGroupMembers && conversation && (
+        <GroupMembersModal
+          group={conversation}
+          onClose={() => setShowGroupMembers(false)}
+          onUpdate={(updatedGroup) => {
+            if (onConvUpdate) {
+              onConvUpdate(updatedGroup);
+            }
+          }}
+        />
+      )}
+
+      {showProfileModal && effectiveOther && (
+        <ProfileModal
+          user={effectiveOther}
+          onClose={() => setShowProfileModal(false)}
+        />
+      )}
     </div>
   );
 }
